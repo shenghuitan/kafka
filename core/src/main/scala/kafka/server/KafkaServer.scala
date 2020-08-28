@@ -120,6 +120,8 @@ object KafkaServer {
 /**
  * Represents the lifecycle of a single Kafka broker. Handles all functionality required
  * to start up and shutdown a single Kafka node.
+ *
+ * 代表着一个kafka broker的生命周期。处理所有的需要的功能，启动和关闭单个kafka节点。
  */
 class KafkaServer(val config: KafkaConfig, time: Time = Time.SYSTEM, threadNamePrefix: Option[String] = None,
                   kafkaMetricsReporters: Seq[KafkaMetricsReporter] = List()) extends Logging with KafkaMetricsGroup {
@@ -142,8 +144,8 @@ class KafkaServer(val config: KafkaConfig, time: Time = Time.SYSTEM, threadNameP
 
   val brokerState: BrokerState = new BrokerState
 
-  var dataPlaneRequestProcessor: KafkaApis = null
-  var controlPlaneRequestProcessor: KafkaApis = null
+  var dataPlaneRequestProcessor: KafkaApis = null     // 数据平面请求处理器
+  var controlPlaneRequestProcessor: KafkaApis = null  // 控制器平面请求控制器
 
   var authorizer: Option[Authorizer] = None
   var socketServer: SocketServer = null

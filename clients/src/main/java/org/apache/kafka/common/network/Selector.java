@@ -131,6 +131,9 @@ public class Selector implements Selectable, AutoCloseable {
 
     /**
      * Create a new nioSelector
+     *
+     * 创建一个新的newSelector实例
+     *
      * @param maxReceiveSize Max size in bytes of a single network receive (use {@link NetworkReceive#UNLIMITED} for no limit)
      * @param connectionMaxIdleMs Max idle connection time (use {@link #NO_IDLE_TIMEOUT_MS} to disable idle timeout)
      * @param failedAuthenticationDelayMs Minimum time by which failed authentication response and channel close should be delayed by.

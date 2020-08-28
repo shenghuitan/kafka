@@ -22,6 +22,9 @@ import java.nio.ByteBuffer;
 /**
  * A common memory pool interface for non-blocking pools.
  * Every buffer returned from {@link #tryAllocate(int)} must always be {@link #release(ByteBuffer) released}.
+ *
+ * 一个通用的内存池接口，给non-blocking池。
+ * 每一个缓冲区从#tryAllocate(int)返回必须总是要#release(ByteBuffer)释放。
  */
 public interface MemoryPool {
     MemoryPool NONE = new MemoryPool() {

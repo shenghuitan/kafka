@@ -24,6 +24,9 @@ import java.util.function.Supplier;
  * An interface abstracting the clock to use in unit testing classes that make use of clock time.
  *
  * Implementations of this class should be thread-safe.
+ *
+ * 一个接口抽象了clock，用于单元测试，利用了clock time。
+ * 这个类的实现必须是线程安全的。
  */
 public interface Time {
 
@@ -31,6 +34,8 @@ public interface Time {
 
     /**
      * Returns the current time in milliseconds.
+     *
+     * 返回当前时间的毫秒数。
      */
     long milliseconds();
 

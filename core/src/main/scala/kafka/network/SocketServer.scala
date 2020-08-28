@@ -64,6 +64,11 @@ import scala.util.control.ControlThrowable
  *      It is possible to configure multiple data-planes by specifying multiple "," separated endpoints for "listeners" in KafkaConfig.
  *      Acceptor has N Processor threads that each have their own selector and read requests from sockets
  *      M Handler threads that handle requests and produce responses back to the processor threads for writing.
+ *
+ *      每一个监听器的接收线程，用户处理新连接。
+ *      接收器有N个处理器线程，每一个有它们各自的selector，从sockets读取请求，M个Handler线程处理请求，
+ *      以及生产响应返回给处理器线程写数据。
+ *
  *  - control-plane :
  *    - Handles requests from controller. This is optional and can be configured by specifying "control.plane.listener.name".
  *      If not configured, the controller requests are handled by the data-plane.
@@ -71,6 +76,9 @@ import scala.util.control.ControlThrowable
  *      1 Acceptor thread that handles new connections
  *      Acceptor has 1 Processor thread that has its own selector and read requests from the socket.
  *      1 Handler thread that handles requests and produce responses back to the processor thread for writing.
+ *
+ *  - 控制平面：
+ *    - 从控制器处理请求。
  */
 class SocketServer(val config: KafkaConfig,
                    val metrics: Metrics,
@@ -83,9 +91,15 @@ class SocketServer(val config: KafkaConfig,
   private val logContext = new LogContext(s"[SocketServer brokerId=${config.brokerId}] ")
   this.logIdent = logContext.logPrefix
 
+  // 内存池传感器
   private val memoryPoolSensor = metrics.sensor("MemoryPoolUtilization")
+
+  // 内存池消耗比例测量名称
   private val memoryPoolDepletedPercentMetricName = metrics.metricName("MemoryPoolAvgDepletedPercent", MetricsGroup)
+
+  // 内存池消耗时间测量名称
   private val memoryPoolDepletedTimeMetricName = metrics.metricName("MemoryPoolDepletedTimeTotal", MetricsGroup)
+
   memoryPoolSensor.add(new Meter(TimeUnit.MILLISECONDS, memoryPoolDepletedPercentMetricName, memoryPoolDepletedTimeMetricName))
   private val memoryPool = if (config.queuedMaxBytes > 0) new SimpleMemoryPool(config.queuedMaxBytes, config.socketRequestMaxBytes, false, memoryPoolSensor) else MemoryPool.NONE
   // data-plane
@@ -458,6 +472,8 @@ object SocketServer {
 
 /**
  * A base class with some helper variables and methods
+ *
+ * 一个基础类，拥有一些有帮助的变量和方法。
  */
 private[kafka] abstract class AbstractServerThread(connectionQuotas: ConnectionQuotas) extends Runnable with Logging {
 
@@ -728,6 +744,8 @@ private[kafka] object Processor {
  * Thread that processes all requests from a single connection. There are N of these running in parallel
  * each of which has its own selector
  *
+ * 线程处理所有请求，从一个单个连接。有N个这些正在并行执行的处理器，每一个都有它自己的selector。
+ *
  * @param isPrivilegedListener The privileged listener flag is used as one factor to determine whether
  *                             a certain request is forwarded or not. When the control plane is defined,
  *                             the control plane processor would be fellow broker's choice for sending
@@ -748,7 +766,7 @@ private[kafka] class Processor(val id: Int,
                                credentialProvider: CredentialProvider,
                                memoryPool: MemoryPool,
                                logContext: LogContext,
-                               connectionQueueSize: Int = ConnectionQueueSize,
+                               connectionQueueSize: Int = ConnectionQueueSize,  // 默认20
                                isPrivilegedListener: Boolean = false) extends AbstractServerThread(connectionQuotas) with KafkaMetricsGroup {
 
   private object ConnectionId {
@@ -766,8 +784,13 @@ private[kafka] class Processor(val id: Int,
     override def toString: String = s"$localHost:$localPort-$remoteHost:$remotePort-$index"
   }
 
+  // 新连接队列
   private val newConnections = new ArrayBlockingQueue[SocketChannel](connectionQueueSize)
+
+  // 飞行中的响应
   private val inflightResponses = mutable.Map[String, RequestChannel.Response]()
+
+  // 响应队列
   private val responseQueue = new LinkedBlockingDeque[RequestChannel.Response]()
 
   private[kafka] val metricTags = mutable.LinkedHashMap(
@@ -797,7 +820,9 @@ private[kafka] class Processor(val id: Int,
       credentialProvider.tokenCache,
       time,
       logContext))
+
   // Visible to override for testing
+  // 为了被测试override的可见性
   protected[network] def createSelector(channelBuilder: ChannelBuilder): KSelector = {
     channelBuilder match {
       case reconfigurable: Reconfigurable => config.addReconfigurable(reconfigurable)
@@ -1181,6 +1206,7 @@ private[kafka] class Processor(val id: Int,
   }
 }
 
+// 连接配额、指标
 class ConnectionQuotas(config: KafkaConfig, time: Time, metrics: Metrics) extends Logging with AutoCloseable {
 
   @volatile private var defaultMaxConnectionsPerIp: Int = config.maxConnectionsPerIp

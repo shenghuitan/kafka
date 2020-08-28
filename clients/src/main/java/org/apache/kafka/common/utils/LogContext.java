@@ -29,6 +29,10 @@ import org.slf4j.spi.LocationAwareLogger;
  * the groupId of the consumer, so this can be added to a context object which can then be passed to
  * all of the dependent components in order to build new loggers. This removes the need to manually
  * add the groupId to each message.
+ *
+ * 这个类提供了一种方式去测量日志，通过一个公共的上下文，可以被用于自动丰富日志消息。比如，在KafkaConsumer，它
+ * 经常有用的知道消费者的groupId，因此这可以被添加到一个上下文对象中，它可以被传递到所有的依赖组件中，为了构建新
+ * loggers。这移除了手工添加groupId到每一个消息的必要性。
  */
 public class LogContext {
 
